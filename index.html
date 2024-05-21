@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- Set up the HTML document by adding Mapbox GL JS -->
+<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js'></script>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script> <!--WEATHER API SCRIPT 1-->
+<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css' rel='stylesheet' />
+<!-- Add a title -->
+<title> Individual Project, Nisargee Kulathunga, S3992083 </title>
+<style>
+  .map {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    bottom: 0;
+  }
+  .map-overlay {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.8);
+  margin-right: 20px;
+  font-family: Arial, sans-serif;
+  overflow: auto;
+  border-radius: 3px;
+}
+#title {
+  top: 0;
+  left: 20px;
+  height: 160px;
+  margin-top: 20px;
+  width: 500px;
+}
+#legend {
+  padding: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  line-height: 30px;
+  height: 250px;
+  right: 20px;
+  margin-bottom: 50px;
+  width: 225px;
+}
+.legend-key {
+ display: inline-block;
+  border-radius: 20%;
+  width: 30px;
+  height: 10px;
+  margin-right: 5px;
+}
+h2 {
+margin: 10px;
+font-size: 1.6em;
+text-align: left;
+}
+p {
+ margin: 10px;
+ font-size: 1em;
+ text-align: left;
+}
+.mapboxgl-popup {
+   max-width: 200px;
+}
+.mapboxgl-popup-content {
+   text-align: center;
+   font-family: 'Arial', sans-serif;
+}
+    .buttons {
+    background: #fff;
+    position: absolute;
+    z-index: 1;
+    top: 10px;
+    right: 40px;
+    border-radius: 3px;
+    width: 120px;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    font-family: 'Open Sans', sans-serif;
+            }
+            .buttons button {
+    font-size: 13px;
+    color: #404040;
+    display: block;
+    margin: 0;
+    padding: 0;
+    padding: 10px;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0,0,0,0.25);
+    text-align: center;
+            }
+  .buttons button:last-child {
+  border: none;
+  }
+  .buttons button:hover {
+  background-color: #f8f8f8;
+  color: #404040;
+  }
+  .buttons button.active {
+  background-color: #3887be;
+  color: #ffffff;
+  }
+  .buttons button.active:hover {
+  background: #3074a4;
+  }
+</style>
+<style type="text/css"> /*WEATHER STYLE*/
+  #popup, #header, #layerpanel {
+    left: 36px;
+  }
+  /*Weather API*/
+  * {
+              box-sizing: border-box;
+          }
+          .verticalweatherForecast { /* @BOXPLACEMENT @Z-INDEX Div only and controls area where the Weather API box is placed*/
+              width:350px;
+              height:540px;
+              /*margin:0;
+              top:0;
+              right:0;
+              left:0; */
+              bottom:0;
+              padding:20px;
+              background-color:#cfcfcf;
+              border-width: 5px;
+              border-color: black;
+              position: absolute; /*This is what is determines position of forecast div*/
+              z-index:1000; /*Make sure this value is the highest of all other z-index values present in the code*/
+          }
+          .forecastwidget {
+              display: flex;
+              flex-direction: column;
+              padding: 5px;
+              font-family:arial;
+              font-size: 14px;
+              background-color:#ffffff;
+              margin:10px;
+              border-radius: 7px;
+          }
+          .forecastwidget .days {
+              display: flex;
+              flex-direction: row;
+              justify-content: start;
+              flex: 1;
+              overflow: hidden;
+          }
+          .forecastwidget .days.vertical {
+              flex-direction: column;
+              font-size: 1.2em;
+          }
+          /*define a grid layout with two columns*/
+          .forecastwidget .days .day {
+              display: grid;
+        grid-template-columns: 50% 50%;
+              justify-content: center;
+              align-items: center;
+              padding: 0px 5px;
+              font-size: 0.9em;
+              justify-items: center;
+              grid-gap: 1px;
+          }   
+      /*most forecast elements take up two columns*/
+          .forecastwidget .days .day * {
+              grid-column: span 2;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+          }
+      /*maximum and minimum elements are arrange side by side*/
+          .forecastwidget .days .day .maxt {
+              grid-column: 1 ;
+          }
+          .forecastwidget .days .day .mint {
+              grid-column: 2 ;
+          }
+          /*define a grid layout with size columns*/
+          .forecastwidget .days.vertical .day {
+              grid-template-columns: 50px 49px 30px 30px 60px auto;
+              grid-gap: 4px;
+              justify-content: start;
+              margin: 2px 0px;
+              padding: 4px 0px;
+          }
+          /*Every element takes up a single grid cell*/
+          .forecastwidget .days.vertical .day * {
+              grid-column: span 1;
+          }
+           /*No special layout is required for the temperature values*/
+          .forecastwidget .days.vertical .day .maxt,  .forecastwidget .days.vertical .day .mint  {
+              grid-column: default ;
+          }
+          /*element styling rules*/
+          .forecastwidget .location {
+              font-size: 1em;
+              font-weight: bold;
+              flex:0;
+          }
+          .forecastwidget .footer {
+              font-size: 0.7em;
+              color:darkgrey;
+              display: flex;
+              justify-content: flex-end;
+          }
+          .forecastwidget .days .day .date {
+              color:darkgrey;
+              font-size: 0.9em;
+              white-space: nowrap;
+          }
+  
+  
+          .forecastwidget .days .day:not(:last-child) {
+              border-right:1px solid darkgray;
+          }
+  
+          .forecastwidget .days.vertical .day:not(:last-child) {
+              border-right:none;
+              border-bottom:1px solid darkgray;
+          }
+  
+          .forecastwidget .days .day .conditions {
+              display:none;
+              color:darkgrey;
+              font-size: 0.9em;
+          }
+          .forecastwidget .days.vertical .day .conditions {
+              display:block;
+          }
+          .forecastwidget .days .day  .maxt {
+              font-weight: bold;
+          }
+          .forecastwidget .days .day  .mint {
+              font-size: 0.9em;
+              color:darkgrey;
+          }
+         
+          .forecastwidget .days .day  .hidden {
+             visibility: hidden;
+          }
+  
+          .forecastwidget .icon {
+              width:65px;
+              height:60px;
+          }
+           /*@PIC FOLDER*/       
+          .forecastwidget .icon.snow {background-image:url(weather_api_images/snow.png);}
+          .forecastwidget .icon.rain {background-image:url(weather_api_images/rain.png);}
+          .forecastwidget .icon.fog {background-image:url(weather_api_images/fog.png);}
+          .forecastwidget .icon.wind {background-image:url(weather_api_images/wind.png);}
+          .forecastwidget .icon.cloudy {background-image:url(weather_api_images/cloudy.png);}
+          .forecastwidget .icon.partly-cloudy-day {background-image:url(weather_api_images/partly-cloudy-day.png);}
+          .forecastwidget .icon.partly-cloudy-night {background-image:url(weather_api_images/partly-cloudy-night.png);}
+          .forecastwidget .icon.clear-day {background-image:url(weather_api_images/clear-day.png);}
+          .forecastwidget .icon.clear-night {background-image:url(weather_api_images/clear-night.png);}
+          /*Added these widgets myself. Not guaranteed to work*/
+          .forecastwidget .icon.hail {background-image:url(weather_api_images/hail.png);}
+          .forecastwidget .icon.rain-snow {background-image:url(weather_api_images/rain-snow.png);}
+          .forecastwidget .icon.rain-snow-showers-day {background-image:url(weather_api_images/rain-snow-showers-day.png);}
+          .forecastwidget .icon.rain-snow-showers-night {background-image:url(weather_api_images/rain-snow-showers-night.png);}
+          .forecastwidget .icon.showers-day {background-image:url(weather_api_images/showers-day.png);}
+          .forecastwidget .icon.showers-night {background-image:url(weather_api_images/showers-night.png);}
+          .forecastwidget .icon.sleet {background-image:url(weather_api_images/sleet.png);}
+          .forecastwidget .icon.snow-showers-day {background-image:url(weather_api_images/snow-showers-day.png);}
+          .forecastwidget .icon.snow-showers-night {background-image:url(weather_api_images/snow-showers-night.png);}
+          .forecastwidget .icon.thunder {background-image:url(weather_api_images/thunder.png);}
+          .forecastwidget .icon.thunder-rain {background-image:url(weather_api_images/thunder-rain.png);}
+          .forecastwidget .icon.thunder-showers-day {background-image:url(weather_api_images/thunder-showers-day.png);}
+          .forecastwidget .icon.thunder-showers-night {background-image:url(weather_api_images/thunder-showers-night.png);}
+  
+</style> <!--END OF WEATHER STYLE-->
+<script> //WEATHER API SCRIPT 1
+  //Start of Weather API template
+  /*WeatherForecastDisplay encapsulates the weather forecast*/
+  var WeatherForecastDisplay=(function() {
+          //used for looking up a simple text value for the month.
+          var MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+          /*
+          * WeatherForecastWidget - encapsulates data retrieval and displau
+          */
+          function WeatherForecastWidget(selector) {
+  
+             
+              //Initialize the widget using the container parameters
+              this.config={
+                  "location":selector.attr("data-location"),
+                  "unitGroup":selector.attr("data-unitGroup") || "metric",
+                  "key": selector.attr("data-key") 
+              }
+  
+              
+              //the root HTML tag selector
+              this.selector=selector;
+  
+              //weather forecasta data
+              this.data=null;
+  
+  
+  
+  
+              var me=this;
+              //constructs Weather API request and then loads the weather forecast data from the Weather API
+              this.loadForecastData=function() {
+                  me.refresh();
+                  //endpoint
+                  var uri="https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/weatherdata/forecast?";
+                  //parameters
+                  uri+="unitGroup="+me.config.unitGroup+"&locationMode=single&aggregateHours=24&contentType=json&iconSet=icons1&location="+me.config.location+"&key="+me.config.key;
+                  $.get(uri, function( rawResult ) {
+                      me.data=rawResult;
+                      me.refresh();
+                  });
+              }
+  
+              //displays the weather data inside the container tag
+              this.refresh=function() {
+                  //me refers to the WeatherForecastWidget instance
+                  var root=$(me.selector);
+  
+                  //no data at all - exit
+                  if (!me.data) {
+                      $(me.selector).html("No data available for "+me.config.location);
+                      return;
+                  }
+                  var locationData=me.data.location;
+  
+                  var forecastValues=locationData.values;
+  
+                  //sets up the basic skeleton HTML for the forecast display
+                  root.toggleClass("forecastwidget", true);
+                  root.html("<div class='location'></div>"+
+                              "<div class='days'></div>"+
+                              "<div class='footer'><a href='https://www.visualcrossing.com/weather-api' title='Weather Data by Visual Crossing' target='_blank'>Credit</a>");
+  
+                 
+               
+                  //use the container size to decide how to display the forecast
+                  //and how many days
+                  var rect=root.get(0).getBoundingClientRect()
+                  
+                  var isVertical=rect.height>rect.width;
+                  root.children(".days").toggleClass("vertical", isVertical);
+  
+                  root.children(".location").html(me.config.location);
+                  forecastValues.forEach(function(d) {
+                      //create a new day div with children
+                      var dayElement=$("<div class='day'>"+
+                              "<div class='date'></div>"+
+                              "<div class='icon'></div>"+
+                              "<div class='maxt'></div>"+
+                              "<div class='mint'></div>"+
+                              //"<div class='icon'></div>"+ //Rainfall icon I added
+                              "<div class='precip'><span class='value'></span></div>"+
+                              "<div class='conditions'></div>"+
+                              "</div>");
+                      
+                      //add the day to the days element
+                      root.find(".days").append(dayElement);
+                      
+                      
+                      //temperature and conditions are simply inserted into the appropriate div
+                      dayElement.find(".maxt").html(Math.round(d.maxt));
+                      dayElement.find(".mint").html(Math.round(d.mint));
+                      dayElement.find(".conditions").html(d.conditions);
+                      
+  
+                      var date= new Date(d.datetimeStr);
+                      
+                      dayElement.find(".date").html(MONTHS[date.getMonth()]+" "+date.getDate());
+  
+  
+                      //the rainfall value includes so hide the whole section if no rainfall
+                      var precip=dayElement.find(".precip");
+                      precip.toggleClass(0,  !d.precip); //Changed from "hidden" to 0 to indicate no precipitation
+                      precip.find(".value").html(d.precip);
+                      
+                      var icon=dayElement.find(".icon");
+                      icon.toggleClass(d.icon,true);
+                     
+          
+                  });
+  
+              
+              }
+              
+  
+             
+          }
+          var attach=function(selector) {
+              var instance=new WeatherForecastWidget($(selector) );
+              instance.loadForecastData();
+              return instance;
+          }
+          return {
+              "attach":attach
+          }
+    })();
+  //End of Weather API script
+</script> <!--END OF WEATHER API SCRIPT 2-->
+</head>
+<body>
+    <div id="map" class="map"></div>
+    <div class="verticalweatherForecast" data-key="K54T5B3B63NYWQLUR8FUYEU5T" data-location="Melbourne, Australia" data-unitGroup="metric"></div> <!--WEATHER API DIV-->
+    <div class="buttons">
+        <button id="toggle-layer1">Toggle Road Layer</button>
+        <button id="toggle-layer2">Toggle Building Layer</button>
+    </div>
+    <div id='legend' class='map-overlay'> <h4>Land Surface Temperature (Celsius)</h4></div>
+    <div class='map-overlay' id='title'><h2>Land Surface Temperature distribution over Merr-ibek City Council</h2><div id='info'><p>Hover over a Mesh Block!</p></div>
+</div>
+<script>
+ mapboxgl.accessToken = 'pk.eyJ1IjoibmlzYXJnZWUiLCJhIjoiY2xldnc0ZDlkMDNobjN3cGltaHo5NjZodSJ9.T4DT1eQfgPVfcRcLeEIk_w';
+var map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/nisargee/clwgcslmf00dd01pp9pg35rxs',
+  center: [144.95596, -37.73445],
+  zoom: 13
+});
+map.addControl(new mapboxgl.NavigationControl());
+map.on('load', function() {
+ // the start of map load function
+  var layers = ['27.7 - 31.9', '31.9 - 36.2', '36.2 - 40.5', '40.5 - 44.7', '44.7 - 49.0'];
+  var colors = ['#0d5bc9', '#84c5f1', '#f8e40d', '#f89012', '#f02828'];
+    for (i = 0; i < layers.length; i++) {
+  var layer = layers[i];
+  var color = colors[i];
+  var item = document.createElement('div');
+  var key = document.createElement('span');
+  key.className = 'legend-key';
+  key.style.backgroundColor = color;
+  var value = document.createElement('span');
+  value.innerHTML = layer;
+  item.appendChild(key);
+  item.appendChild(value);
+  legend.appendChild(item);
+// Example layer IDs from the Mapbox style (replace with actual layer IDs)
+      const layer1 = 'roads-and-carparks-and-paveme-1bwu16'; // Replace with your water layer ID
+      const layer2 = 'building-footprints-and-forms-3bohge'; // Replace with your road layer ID
+    // Function to toggle the visibility of a layer
+      function toggleLayer(layerId) {
+          const visibility = map.getLayoutProperty(layerId, 'visibility');
+          if (visibility === 'visible') {
+              map.setLayoutProperty(layerId, 'visibility', 'none');
+          } else {
+              map.setLayoutProperty(layerId, 'visibility', 'visible');
+          }
+      }
+
+      // Add event listeners to the buttons
+      document.getElementById('toggle-layer1').addEventListener('click', function () {
+          toggleLayer(layer1);
+      });
+
+      document.getElementById('toggle-layer2').addEventListener('click', function () {
+          toggleLayer(layer2);
+      });
+//start of mouse mover function
+ map.on('mousemove', function(i) {
+        var temperatureinfo = map.queryRenderedFeatures(i.point, {
+    layers: ['surfacetemperature-cedvog']
+    });
+        if (temperatureinfo.length > 0) {
+    document.getElementById('info').innerHTML = '<p>' + temperatureinfo[0].properties._mean + '<p><em>' + temperatureinfo[0].properties.SA2_NAME21 + '</em></p>';
+    } else {
+    document.getElementById('info').innerHTML = '<p>Hover over a shaded building for details.</p>';
+    } 
+ });//end of mouse mover function
+    // Change the icon to a pointer icon when you mouse over a building
+    map.on('mouseenter', 'surfacetemperature-cedvog', function () {
+    map.getCanvas().style.cursor = 'pointer';
+    });
+
+    // Change it back to a pan icon when it leaves.
+    map.on('mouseleave', 'surfacetemperature-cedvog', function () {
+    map.getCanvas().style.cursor = '';
+    });
+    //Start of pop-up function
+        map.on('click', 'surfacetemperature-cedvog', function (e) {new mapboxgl.Popup()
+        .setLngLat(e.lngLat)
+        .setHTML("<b>Mean Land Surface Temperature: </b>" + e.features[0].properties._mean + '<br>' + "<b>Mesh Block Code: </b>" + e.features[0].properties.MB_CODE21 + '<br>' + "<b>Mesh Block Category: </b>" + e.features[0].properties.MB_CAT21)
+        .addTo(map);
+    });//end of pop-up function
+}}); //end of map load function
+</script>
+<script> //WEATHER API SCRIPT 2
+  //Weather API
+  WeatherForecastDisplay.attach(".verticalweatherForecast");
+</script> <!--END OF WEATHER API SCRIPT 2-->   
+</body>
+</html>
